@@ -3,6 +3,7 @@ package com.alcumbrack.sentiment_crawler.scraper;
 import com.alcumbrack.sentiment_crawler.model.RedditPost;
 import com.alcumbrack.sentiment_crawler.repository.RedditPostRepository;
 import com.alcumbrack.sentiment_crawler.service.SentimentAnalyzer;
+import org.springframework.scheduling.annotation.Scheduled;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
@@ -30,9 +31,20 @@ public class RedditScraper {
         this.objectMapper = new ObjectMapper();
     }
 
-    public void scrapeSubreddit(String subreddit) {
+    // Run every 60,000 ms (1 minute)
+    @Scheduled(fixedRate = 60000)
+    public void runScraper() {
+        // Scrape a few subreddits
+        String[] subreddits = {"java", "programming", "technology"};
+
+        for (String sub : subreddits) {
+            scrapeSubreddit(sub);
+        }
+    }
+
+    // Only called internally so change to private
+    private void scrapeSubreddit(String subreddit) {
         String url = "https://www.reddit.com/r/" + subreddit + "/top.json?limit=10";
-//        List<String> titles = new ArrayList<>();
 
         try {
             // Build Request in native Java
@@ -56,8 +68,6 @@ public class RedditScraper {
 
             if (posts.isArray()) {
                 for (JsonNode post : posts) {
-//                    String title = post.path("data").path("title").asText();
-//                    titles.add(title);
                     JsonNode data = post.path("data");
 
                     // Extract data
@@ -65,6 +75,17 @@ public class RedditScraper {
                     String author = data.path("author").asText();
                     String postUrl = data.path("url").asText();
                     String content = data.path("selftext").asText();
+
+                    // Defensive check (good for logs)
+                    if (title.length() > 255) {
+                        System.out.println("Warning: Found a massive title (" + title.length() + " chars: " + title.substring(0, 50) + "...");
+                    }
+
+                    // Check for duplicates
+                    if (repository.existsByUrl(postUrl)) {
+                        System.out.println("Skipping duplicate: " + title);
+                        continue; // Jump to next iter of loop
+                    }
 
                     // Analyze title + content combined for better context
                     int score = sentimentAnalyzer.analyze(title + ". " + content);

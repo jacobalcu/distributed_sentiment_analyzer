@@ -13,11 +13,12 @@ public class RedditPost {
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Auto increment (1, 2, 3...)
     private Long id;
 
-    @Column(length = 500) // Allow longer titles
+    @Column(columnDefinition = "TEXT") // Allow longer titles
     private String title;
 
     private String author;
 
+    @Column(columnDefinition = "TEXT") // Allow unlimited text in postgres
     private String url;
 
     private LocalDateTime createdAt;

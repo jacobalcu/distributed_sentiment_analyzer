@@ -5,24 +5,26 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
+@EnableScheduling
 public class SentimentCrawlerApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(SentimentCrawlerApplication.class, args);
 	}
 
-	@Bean // Runs automatically on start
-	CommandLineRunner runScraper(RedditScraper scraper) {
-		return args -> {
-			System.out.println("--- Starting Scraper ---");
-			scraper.scrapeSubreddit("java");
-
-//			titles.forEach(title -> System.out.println("Found: " + title));
-
-			System.out.println(("--- Scraper Finished ---"));
-		};
-	}
+//	@Bean // Runs automatically on start
+//	CommandLineRunner runScraper(RedditScraper scraper) {
+//		return args -> {
+//			System.out.println("--- Starting Scraper ---");
+//			scraper.scrapeSubreddit("java");
+//
+////			titles.forEach(title -> System.out.println("Found: " + title));
+//
+//			System.out.println(("--- Scraper Finished ---"));
+//		};
+//	}
 
 }
