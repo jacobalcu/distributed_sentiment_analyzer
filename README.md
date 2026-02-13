@@ -26,7 +26,7 @@ A Full-Stack Java application that crawls Reddit data, performs real-time Sentim
 
 ### 1. Clone the Repository
 ```bash
-git clone [https://github.com/YOUR_USERNAME/distributed-sentiment-analyzer.git](https://github.com/YOUR_USERNAME/distributed-sentiment-analyzer.git)
+git clone https://github.com/jacobalcu/distributed_sentiment_analyzer.git
 cd distributed-sentiment-analyzer
 ```
 
