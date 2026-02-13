@@ -92,7 +92,7 @@ public class RedditScraper {
 
                     // Create Entity
                     RedditPost newPost = new RedditPost(title, author, postUrl, content);
-                    newPost.setSentimentScore(score);                   ;
+                    newPost.setSentimentScore(score);
 
                     // Save to DB
                     repository.save(newPost);
@@ -104,6 +104,5 @@ public class RedditScraper {
             e.printStackTrace();
         }
 
-        return;
     }
 }

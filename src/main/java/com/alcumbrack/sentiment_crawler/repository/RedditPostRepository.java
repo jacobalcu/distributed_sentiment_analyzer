@@ -4,6 +4,8 @@ import com.alcumbrack.sentiment_crawler.model.RedditPost;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface RedditPostRepository extends JpaRepository<RedditPost, Long> {
     // Now have full CRUD capabilities
@@ -14,4 +16,6 @@ public interface RedditPostRepository extends JpaRepository<RedditPost, Long> {
     // Check if URL already exists in DB. Return true/false
     // Spring Data automatically implements the logic
     boolean existsByUrl(String url);
+
+    List<RedditPost> findBySentimentScore(int sentimentScore);
 }
