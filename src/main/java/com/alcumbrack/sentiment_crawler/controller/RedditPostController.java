@@ -8,7 +8,7 @@ import java.util.List;
 
 @RestController // Tells Spring this class handles Web Requests
 @RequestMapping("/api/posts") // All URLs will start with /api/posts
-@CrossOrigin(origins = "http://localhost:3000") // Allow React (running on port 3000) to access this
+@CrossOrigin(origins = "http://localhost:5173") // Allow React (running on port 3000) to access this
 public class RedditPostController {
 
     private final RedditPostRepository repository;
