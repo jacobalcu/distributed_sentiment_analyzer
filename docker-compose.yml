@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  # The DB
+  postgres:
+    image: postgres:16-alpine
+    container_name: sentiment_db
+    environment:
+      POSTGRES_DB: crawler_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Java Backend
+  backend:
+    build: .
+    container_name: sentiment_backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    environment:
+      # Override localhost w container name 'postgres'
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/crawler_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: password
+      # Allow frontend container to talk to backend
+      ALLOWED_ORIGINS: http://localhost:5173
+
+  # React frontend
+  frontend:
+    build: ./frontend
+    container_name: sentiment_frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    environment:
+      VITE_API_URL: http://localhost:8080
+
+volumes:
+  postgres_data:
