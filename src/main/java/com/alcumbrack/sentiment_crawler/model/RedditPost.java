@@ -4,6 +4,8 @@ import jakarta.persistence.*; // JPA Standard Interface
 import jakarta.validation.constraints.Positive;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity // Tells Hibernate to make table out of this class
 @Table(name = "reddit_posts") // Specify exact table name in Postgres
@@ -36,6 +38,13 @@ public class RedditPost {
 //     4: Very Positive
 //    }
 
+    // Stores stock tickers using simple collection table
+    // ["NVDA","AMD"]
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "post_tickers", joinColumns = @JoinColumn(name = "post_id"))
+    @Column(name = "ticker")
+    private List<String> tickers;
+
     // Constructors
     public RedditPost() {} // JPA requires empty constructor
 
@@ -47,6 +56,7 @@ public class RedditPost {
         this.createdAt = LocalDateTime.now();
         // Default to 2 until analyzed
         this.sentimentScore = 2;
+        this.tickers = new ArrayList<>();
     }
 
     // Getters and Setters (req. for JPA to work)
@@ -61,4 +71,6 @@ public class RedditPost {
     public void setContent(String content) { this.content = content; }
     public int getSentimentScore() { return sentimentScore; }
     public void setSentimentScore(int sentimentScore) { this.sentimentScore = sentimentScore; }
+    public List<String> getTickers() { return tickers; }
+    public void setTickers(List<String> tickers) { this.tickers = tickers; }
 }

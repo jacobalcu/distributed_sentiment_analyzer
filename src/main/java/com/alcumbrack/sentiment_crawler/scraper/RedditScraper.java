@@ -13,6 +13,12 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 @Service // Tells Spring to manage the class
 public class RedditScraper {
@@ -20,6 +26,35 @@ public class RedditScraper {
     private final ObjectMapper objectMapper; // Jackson library for JSON parsing
     private final RedditPostRepository repository;
     private final SentimentAnalyzer sentimentAnalyzer;
+
+    // A predefined list of stocks we care about (The "Watchlist")
+    private static final List<String> WATCHLIST = Arrays.asList(
+            "NVDA", "TSLA", "AMD", "AAPL", "GOOG", "MSFT", "AMZN", "META", "GME", "PLTR"
+    );
+
+    private List<String> extractTickers(String text) {
+        List<String> foundTickers = new ArrayList<>();
+        String upperText = text.toUpperCase();
+
+        // Check for cashtags ($NVDA)
+        Pattern pattern = Pattern.compile("\\$([A-Z]{2,5})");
+        Matcher matcher = pattern.matcher(upperText);
+        while (matcher.find()) {
+            foundTickers.add(matcher.group(1));
+        }
+
+        // Check for watchlist words
+        for (String ticker : WATCHLIST) {
+            // Use word boundaries (\b) so "AMAZON" doesn't match "AMZN" wrongly
+            // but "AMD" matches " AMD "
+            if (upperText.matches(".*\\b" + ticker +"\\b.*")) {
+                if (!foundTickers.contains(ticker)) {
+                    foundTickers.add(ticker);
+                }
+            }
+        }
+        return foundTickers;
+    }
 
     // Constructor injection (Spring auto passes the repo in)
     public RedditScraper(RedditPostRepository repository, SentimentAnalyzer sentimentAnalyzer) {
@@ -35,7 +70,7 @@ public class RedditScraper {
     @Scheduled(fixedRate = 60000)
     public void runScraper() {
         // Scrape a few subreddits
-        String[] subreddits = {"java", "programming", "technology"};
+        String[] subreddits = {"stocks", "wallstreetbets", "investing", "options"};
 
         for (String sub : subreddits) {
             scrapeSubreddit(sub);
@@ -44,7 +79,7 @@ public class RedditScraper {
 
     // Only called internally so change to private
     private void scrapeSubreddit(String subreddit) {
-        String url = "https://www.reddit.com/r/" + subreddit + "/top.json?limit=10";
+        String url = "https://www.reddit.com/r/" + subreddit + "/top.json?limit=100&t=day";
 
         try {
             // Build Request in native Java
@@ -83,21 +118,32 @@ public class RedditScraper {
 
                     // Check for duplicates
                     if (repository.existsByUrl(postUrl)) {
-                        System.out.println("Skipping duplicate: " + title);
+//                        System.out.println("Skipping duplicate: " + title);
                         continue; // Jump to next iter of loop
                     }
 
                     // Analyze title + content combined for better context
-                    int score = sentimentAnalyzer.analyze(title + ". " + content);
+                    String fullText = title + " " + content;
+                    int score = sentimentAnalyzer.analyze(fullText);
+
+                    // Extract Tickers
+                    List<String> tickers = extractTickers(fullText);
+
+                    // Skip posts w/ no tickers
+                    if (tickers.isEmpty()) {
+                        // Log to know it's working but rejecting for no tickers
+                        System.out.println("Skipped (No Ticker): " + title.substring(0, Math.min(title.length(), 40)) + "...");
+                        continue;
+                    }
 
                     // Create Entity
                     RedditPost newPost = new RedditPost(title, author, postUrl, content);
                     newPost.setSentimentScore(score);
+                    newPost.setTickers(tickers);
 
                     // Save to DB
                     repository.save(newPost);
-
-                    System.out.println("Saved: [" + score + "] " + title);
+                    System.out.println("Saved: " + tickers + " -> [" + score + "] " + title);
                 }
             }
         } catch (Exception e) {

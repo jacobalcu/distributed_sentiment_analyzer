@@ -32,6 +32,11 @@ public class SentimentAnalyzer {
             return 2; // Neutral if empty
         }
 
+        // Trucate text
+        if (text.length() > 500) {
+            text = text.substring(0, 500);
+        }
+
         // Run the pipeline on the text
         Annotation annotation = pipeline.process(text);
 
